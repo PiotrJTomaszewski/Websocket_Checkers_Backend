@@ -1,6 +1,9 @@
 import uuid
 from .game_room import GameRoom
 from .player import Player
+from .game_board import GameBoard
+from .game_piece import GamePieceColor
+
 from json import JSONEncoder
 
 
@@ -40,11 +43,32 @@ class GamesHandler(metaclass=Singleton):
         print(f'{len(self.players.keys())} players, {len(self.rooms)} rooms')
         return player
 
-    def add_player(self, uuid_str: str = None) -> Player:
+    def add_player(self, uuid_str: str = None) -> tuple[Player, bool]:
+        # Returns True if new Player object was created
         if uuid_str is None:
-            return self.initialize_player(None)
+            return self.initialize_player(None), True
         player = self.players.get(uuid_str)
         if player is None:
-            return self.initialize_player(uuid_str)
+            return self.initialize_player(uuid_str), True
         else:
-            return player
+            return player, False
+
+    def get_pieces_list(self, game_board: GameBoard):
+        pieces = game_board.flatten_pieces()
+        pieces_dict_list = list(map(lambda piece: {'color': piece.get_color().value, 'type': piece.get_type().value, 'field_no': piece.get_field_no()}, pieces))
+        return JSONEncoder().encode(pieces_dict_list)
+
+    def check_and_start_game(self, room: GameRoom) -> None:
+        if room.can_game_start():
+            room.start_game()
+            pieces_enc = self.get_pieces_list(room.game.game_board)
+            room.players[0].send_msg('StartGame', [str(GamePieceColor.LIGHT.value), pieces_enc])
+            room.players[1].send_msg('StartGame', [str(GamePieceColor.DARK.value), pieces_enc])
+            print("Game started")
+
+    def send_state(self, player: Player):
+        # TODO: Finish
+        if player.room.in_game:
+            pieces = self.get_pieces_list(player.room.game.game_board)
+            color_val = player.in_room_id + 1
+            player.send_msg('CurrentState', [str(color_val), str(player.room.game.game_state.value), pieces])

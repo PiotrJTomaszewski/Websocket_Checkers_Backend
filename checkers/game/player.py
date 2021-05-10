@@ -5,10 +5,10 @@ from uuid import UUID, uuid4
 
 class Player:
     def __init__(self, uuid_str: str = None) -> None:
-        self.is_in_game = False
-        self.room = None
-        self.in_room_id = None
-        self.uuid = None
+        self.room: 'game_room.GameRoom' = None
+        self.in_room_id: int = None
+        self.uuid: UUID = None
+        self.send_msg: function = None
         if uuid_str is None:
             self.gen_uuid()
         else:
@@ -26,3 +26,6 @@ class Player:
     def set_game_room(self, room: 'game_room.GameRoom', in_room_id: int) -> None:
         self.room = room
         self.in_room_id = in_room_id
+
+    def set_send_msg_func(self, func) -> None:
+        self.send_msg = func

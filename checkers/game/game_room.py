@@ -17,3 +17,12 @@ class GameRoom:
         else:
             self.players[1] = player
             return 1
+
+    def can_game_start(self) -> bool:
+        return self.is_full() and not self.in_game
+
+    def start_game(self) -> None:
+        self.game = game.Game()
+        self.game.start_game()
+        self.in_game = True
+        print(self.game.game_board.flatten_pieces())

@@ -1,12 +1,14 @@
+from checkers.game.game import Game
 from checkers.game.games_handler import GamesHandler
-from uuid import UUID, uuid4
+from checkers.game import player
+
 import tornado.websocket
 
 
 class PlayerHandler(tornado.websocket.WebSocketHandler):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.player = None
+        self.player: 'player.Player' = None
 
     def check_origin(self, origin) -> bool:
         # HTML for the game is hosted on a different server
@@ -15,14 +17,28 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
     def open(self) -> None:
         print("New Connection")
 
+    def msg_send(self, msg_type, data=None):
+        print('Message sent: ', msg_type, data)
+        if data is None:
+            self.write_message(msg_type)
+        else:
+            self.write_message(';'.join([msg_type, ';'.join(data)]))
+
     def msg_hand_join_new(self, data=None):
-        self.player = GamesHandler().add_player(None)
-        self.write_message(f'WelcomeNew;{self.player.get_uuid_str()}')
+        self.player, _ = GamesHandler().add_player(None)
+        self.player.set_send_msg_func(self.msg_send)
+        self.msg_send('WelcomeNew', [self.player.get_uuid_str()])
+        GamesHandler().check_and_start_game(self.player.room)
 
     def msg_hand_join_existing(self, data=None):
         uuid_str = data[0]
-        self.player = GamesHandler().add_player(uuid_str)
-        self.write_message('Welcome')
+        self.player, is_new = GamesHandler().add_player(uuid_str)
+        self.player.set_send_msg_func(self.msg_send)
+        if is_new:
+            self.msg_send('Welcome')
+            GamesHandler().check_and_start_game(self.player.room)
+        else:
+            GamesHandler().send_state(self.player)
 
     def on_message(self, message):
         print(f"Message received: {message}")
@@ -33,7 +49,10 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         elif tmp[0] == 'JoinExisting':
             self.msg_hand_join_existing(tmp[1:])
 
-
-
     def on_close(self):
         print("Connection closed")
+        # TODO: Cleanup if both players left the room
+
+    def on_connection_close(self) -> None:
+        print("On connection close")
+
