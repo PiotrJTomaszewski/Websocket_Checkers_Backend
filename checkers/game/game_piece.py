@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class GamePieceColor(Enum):
+    ERROR = 0
     LIGHT = 1
     DARK = 2
 

@@ -40,6 +40,11 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         else:
             GamesHandler().send_state(self.player)
 
+    def msg_hand_move(self, data=None):
+        from_field = int(data[0])
+        to_field = int(data[1])
+        GamesHandler().move_piece(self.player, from_field, to_field)
+
     def on_message(self, message):
         print(f"Message received: {message}")
         # TODO: Use dict and message type as number
@@ -48,6 +53,8 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
             self.msg_hand_join_new()
         elif tmp[0] == 'JoinExisting':
             self.msg_hand_join_existing(tmp[1:])
+        elif tmp[0] == 'Move':
+            self.msg_hand_move(tmp[1:])
 
     def on_close(self):
         print("Connection closed")

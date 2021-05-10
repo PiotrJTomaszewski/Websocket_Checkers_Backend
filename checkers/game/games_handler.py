@@ -1,8 +1,7 @@
-import uuid
 from .game_room import GameRoom
 from .player import Player
-from .game_board import GameBoard
 from .game_piece import GamePieceColor
+from .game import Game, GameError, GameState, MoveResult
 
 from json import JSONEncoder
 
@@ -53,22 +52,40 @@ class GamesHandler(metaclass=Singleton):
         else:
             return player, False
 
-    def get_pieces_list(self, game_board: GameBoard):
-        pieces = game_board.flatten_pieces()
-        pieces_dict_list = list(map(lambda piece: {'color': piece.get_color().value, 'type': piece.get_type().value, 'field_no': piece.get_field_no()}, pieces))
+    def get_pieces_list(self, game: Game):
+        pieces = game.filter_pieces()
+        pieces_dict_list = list(map(lambda piece: {'color': piece.get_color(
+        ).value, 'type': piece.get_type().value, 'field_no': piece.get_field_no()}, pieces))
         return JSONEncoder().encode(pieces_dict_list)
 
     def check_and_start_game(self, room: GameRoom) -> None:
         if room.can_game_start():
             room.start_game()
-            pieces_enc = self.get_pieces_list(room.game.game_board)
-            room.players[0].send_msg('StartGame', [str(GamePieceColor.LIGHT.value), pieces_enc])
-            room.players[1].send_msg('StartGame', [str(GamePieceColor.DARK.value), pieces_enc])
+            pieces_enc = self.get_pieces_list(room.game)
+            room.players[0].send_msg(
+                'StartGame', [str(GamePieceColor.LIGHT.value), pieces_enc])
+            room.players[1].send_msg(
+                'StartGame', [str(GamePieceColor.DARK.value), pieces_enc])
             print("Game started")
 
     def send_state(self, player: Player):
         # TODO: Finish
         if player.room.in_game:
-            pieces = self.get_pieces_list(player.room.game.game_board)
+            pieces = self.get_pieces_list(player.room.game)
             color_val = player.in_room_id + 1
-            player.send_msg('CurrentState', [str(color_val), str(player.room.game.game_state.value), pieces])
+            player.send_msg('CurrentState', [str(color_val), str(
+                player.room.game.game_state.value), pieces])
+
+    def move_piece(self, player: Player, from_field: int, to_field: int) -> None:
+        game: Game = player.room.game
+        if game.get_piece_color(from_field) == player.piece_color:
+            result: MoveResult = game.move_piece(from_field, to_field)
+            if result.move_error != GameError.NO_ERROR:
+                player.send_msg('WrongMove', [str(from_field), str(result.move_error.value)])
+            else:
+                room: GameRoom = player.room
+                room.players[0].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.captured_piece_field)])
+                room.players[1].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.captured_piece_field)])
+        else:
+            player.send_msg('WrongMove', [str(from_field), str(GameError.CANT_MOVE_PIECE.value)])
+        # TODO: Check for victory

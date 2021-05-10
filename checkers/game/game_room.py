@@ -25,4 +25,4 @@ class GameRoom:
         self.game = game.Game()
         self.game.start_game()
         self.in_game = True
-        print(self.game.game_board.flatten_pieces())
+        print(self.game.filter_pieces())

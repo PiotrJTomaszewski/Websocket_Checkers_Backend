@@ -1,4 +1,5 @@
-from . import game_room
+from checkers.game.game_piece import GamePieceColor
+from checkers.game import game_room
 
 from uuid import UUID, uuid4
 
@@ -9,6 +10,7 @@ class Player:
         self.in_room_id: int = None
         self.uuid: UUID = None
         self.send_msg: function = None
+        self.piece_color: GamePieceColor = None
         if uuid_str is None:
             self.gen_uuid()
         else:
@@ -26,6 +28,8 @@ class Player:
     def set_game_room(self, room: 'game_room.GameRoom', in_room_id: int) -> None:
         self.room = room
         self.in_room_id = in_room_id
+        # TODO: Maybe rand?
+        self.piece_color = GamePieceColor.LIGHT if self.in_room_id == 0 else GamePieceColor.DARK
 
     def set_send_msg_func(self, func) -> None:
         self.send_msg = func
