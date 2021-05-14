@@ -5,6 +5,7 @@ class GamePieceColor(Enum):
     ERROR = 0
     LIGHT = 1
     DARK = 2
+    NOCOLOR = 3
 
 
 class GamePieceType(Enum):

@@ -87,5 +87,5 @@ class GamesHandler(metaclass=Singleton):
                 room.players[0].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.captured_piece_field)])
                 room.players[1].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.captured_piece_field)])
         else:
-            player.send_msg('WrongMove', [str(from_field), str(GameError.CANT_MOVE_PIECE.value)])
+            player.send_msg('WrongMove', [str(from_field), str(GameError.NOT_YOUR_PIECE.value)])
         # TODO: Check for victory

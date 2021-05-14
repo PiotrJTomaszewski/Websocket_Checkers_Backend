@@ -20,6 +20,8 @@ class GameError(Enum):
     FIELD_TAKEN = 4
     NOT_KING = 5
     NOT_YOUR_TURN = 6
+    NOT_YOUR_PIECE = 7
+    MUST_CAPTURE = 8
 
 
 class Direction(Enum):
@@ -61,12 +63,14 @@ class Game:
         if field_no >= 1 and field_no <= 32:
             if self.fields[field_no] is not None:
                 return self.fields[field_no].get_color()
-            return None
+            return GamePieceColor.NOCOLOR
         else:
             return GamePieceColor.ERROR
 
     def get_piece_color_rc(self, row: int, col: int) -> GamePieceColor:
-        return self.get_piece_color(self.row_col2field_no(row, col))
+        if row >= 0 and row < self.board_height and col >= 0 and col < self.board_width:
+            return self.get_piece_color(self.row_col2field_no(row, col))
+        return GamePieceColor.ERROR
 
     def init_pieces(self) -> None:
         for i in range(1, 13):
@@ -98,7 +102,7 @@ class Game:
             board_repr.append('\n')
         board_repr.append('\n')
         print(''.join(board_repr))
-        self.debug_print_board_numbers()
+        # self.debug_print_board_numbers()
 
     def debug_print_board_numbers(self) -> None:
         board_repr = []
@@ -169,107 +173,122 @@ class Game:
             # Check if player tried to capture his own piece
             if piece.get_color() == self.fields[through_field].get_color():
                 return MoveResult(GameError.ILLEGAL_MOVE)
+        else:
+            if self.can_capture_any(from_field):
+                return MoveResult(GameError.MUST_CAPTURE)
         # Move the piece
         self.fields[to_field] = piece
         self.fields[from_field] = None
-        self.debug_print_board()
         if field_count == 2:
             self.fields[through_field] = None
-            end_turn = not self.can_piece_make_any_move(to_field)
+            end_turn = not self.can_capture_any(to_field)
             if end_turn:
                 if self.game_state == GameState.LIGHT_TURN:
                     self.game_state = GameState.DARK_TURN
                 else:
                     self.game_state = GameState.LIGHT_TURN
+            self.debug_print_board()
             return MoveResult(GameError.NO_ERROR, end_turn=end_turn, captured_piece_field=through_field)
         if self.game_state == GameState.LIGHT_TURN:
             self.game_state = GameState.DARK_TURN
         else:
             self.game_state = GameState.LIGHT_TURN
+        self.debug_print_board()
         return MoveResult(GameError.NO_ERROR, end_turn=True)
 
-    def can_piece_make_any_move(self, from_field: int) -> bool:
+    def can_capture_any(self, from_field: int) -> bool:
         piece = self.fields[from_field]
-        opponent_color = GamePieceColor.LIGHT if piece.get_color(
-        ) == GamePieceColor.DARK else GamePieceColor.DARK
+        opponent_color = GamePieceColor.LIGHT if piece.get_color() == GamePieceColor.DARK else GamePieceColor.DARK
         from_row, from_col = self.field_no2row_col(from_field)
         if piece.get_color() == GamePieceColor.DARK or piece.get_type() == GamePieceType.KING:
             if from_row % 2 == 0:
-                # One up left
-                if self.get_piece_color_rc(from_row+1, from_col+1) is None:
-                    print("One up left")
-                    return True
-                # One up right
-                if self.get_piece_color_rc(from_row+1, from_col) is None:
-                    print("One up right")
-                    return True
                 # Two up left
-                if self.get_piece_color_rc(from_row+2, from_col+1) is None \
+                if self.get_piece_color_rc(from_row+2, from_col+1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row+1, from_col+1) == opponent_color:
                     print("Two up left")
                     return True
                 # Two up right
-                if self.get_piece_color_rc(from_row+2, from_col-1) is None \
+                if self.get_piece_color_rc(from_row+2, from_col-1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row+1, from_col) == opponent_color:
                     print("Two up right")
                     return True
             else:
-                # One up left
-                if self.get_piece_color_rc(from_row+1, from_col) is None:
-                    print("One up left")
-                    return True
-                # One up right
-                if self.get_piece_color_rc(from_row+1, from_col-1) is None:
-                    print("One up right")
-                    return True
                 # Two up left
-                if self.get_piece_color_rc(from_row+2, from_col+1) is None \
+                if self.get_piece_color_rc(from_row+2, from_col+1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row+1, from_col) == opponent_color:
                     print("Two up left")
                     return True
                 # Two up right
-                if self.get_piece_color_rc(from_row+2, from_col-1) is None \
+                if self.get_piece_color_rc(from_row+2, from_col-1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row+1, from_col-1) == opponent_color:
                     print("Two up right")
                     return True
 
         if piece.get_color() == GamePieceColor.LIGHT or piece.get_type() == GamePieceType.KING:
             if from_row % 2 == 0:
-                # One down left
-                if self.get_piece_color_rc(from_row-1, from_col+1) is None:
-                    print("One down left")
-                    return True
-                # One down right
-                if self.get_piece_color_rc(from_row-1, from_col) is None:
-                    print("One down right")
-                    return True
                 # Two down left
-                if self.get_piece_color_rc(from_row-2, from_col+1) is None \
+                if self.get_piece_color_rc(from_row-2, from_col+1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row-1, from_col+1) == opponent_color:
                     print("Two down left")
                     return True
                 # Two down right
-                if self.get_piece_color_rc(from_row-2, from_col-1) is None \
+                if self.get_piece_color_rc(from_row-2, from_col-1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row-1, from_col) == opponent_color:
                     print("Two down right")
                     return True
             else:
-                # One down left
-                if self.get_piece_color_rc(from_row-1, from_col) is None:
-                    print("One down left")
-                    return True
-                # One down right
-                if self.get_piece_color_rc(from_row-1, from_col-1) is None:
-                    print("One down right")
-                    return True
                 # Two down left
-                if self.get_piece_color_rc(from_row-2, from_col+1) is None \
+                if self.get_piece_color_rc(from_row-2, from_col+1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row-1, from_col) == opponent_color:
                     print("Two down left")
                     return True
                 # Two down right
-                if self.get_piece_color_rc(from_row-2, from_col-1) is None \
+                if self.get_piece_color_rc(from_row-2, from_col-1) == GamePieceColor.NOCOLOR \
                         and self.get_piece_color_rc(from_row - 1, from_col - 1) == opponent_color:
                     print("Two down right")
                     return True
         return False
+
+    def can_piece_make_any_move(self, from_field: int) -> bool:
+        piece = self.fields[from_field]
+        from_row, from_col = self.field_no2row_col(from_field)
+        if piece.get_color() == GamePieceColor.DARK or piece.get_type() == GamePieceType.KING:
+            if from_row % 2 == 0:
+                # One up left
+                if self.get_piece_color_rc(from_row+1, from_col+1) == GamePieceColor.NOCOLOR:
+                    print("One up left")
+                    return True
+                # One up right
+                if self.get_piece_color_rc(from_row+1, from_col) == GamePieceColor.NOCOLOR:
+                    print("One up right")
+                    return True
+            else:
+                # One up left
+                if self.get_piece_color_rc(from_row+1, from_col) == GamePieceColor.NOCOLOR:
+                    print("One up left")
+                    return True
+                # One up right
+                if self.get_piece_color_rc(from_row+1, from_col-1) == GamePieceColor.NOCOLOR:
+                    print("One up right")
+                    return True
+
+        if piece.get_color() == GamePieceColor.LIGHT or piece.get_type() == GamePieceType.KING:
+            if from_row % 2 == 0:
+                # One down left
+                if self.get_piece_color_rc(from_row-1, from_col+1) == GamePieceColor.NOCOLOR:
+                    print("One down left")
+                    return True
+                # One down right
+                if self.get_piece_color_rc(from_row-1, from_col) == GamePieceColor.NOCOLOR:
+                    print("One down right")
+                    return True
+            else:
+                # One down left
+                if self.get_piece_color_rc(from_row-1, from_col) == GamePieceColor.NOCOLOR:
+                    print("One down left")
+                    return True
+                # One down right
+                if self.get_piece_color_rc(from_row-1, from_col-1) == GamePieceColor.NOCOLOR:
+                    print("One down right")
+                    return True
+        return self.can_capture_any(from_field)
