@@ -32,9 +32,10 @@ class Direction(Enum):
 
 
 class MoveResult:
-    def __init__(self, move_error: GameError, end_turn: bool = None, captured_piece_field: int = None) -> None:
+    def __init__(self, move_error: GameError, end_turn: bool = None, promote: bool = None, captured_piece_field: int = None) -> None:
         self.move_error = move_error
         self.end_turn = end_turn
+        self.promote = promote
         self.captured_piece_field = captured_piece_field
 
 
@@ -125,6 +126,18 @@ class Game:
     def filter_pieces(self) -> list[GamePiece]:
         return list(filter(lambda x: x is not None, self.fields))
 
+    def check_and_promote_piece(self, field_no) -> bool:
+        piece = self.fields[field_no]
+        if piece is not None:
+            row = field_no // self.board_width
+            if piece.get_color() == GamePieceColor.LIGHT and row == 0:
+                piece.type = GamePieceType.KING
+                return True
+            if piece.get_color() == GamePieceColor.DARK and row == self.board_height-1:
+                piece.type = GamePieceType.KING
+                return True
+        return False
+
     # TODO: If it's a second move in turn check if it's the same piece
     def move_piece(self, from_field, to_field) -> MoveResult:
         if from_field < 1 or from_field > 32:
@@ -178,6 +191,7 @@ class Game:
                 return MoveResult(GameError.MUST_CAPTURE)
         # Move the piece
         self.fields[to_field] = piece
+        piece.field_no = to_field
         self.fields[from_field] = None
         if field_count == 2:
             self.fields[through_field] = None
@@ -187,14 +201,16 @@ class Game:
                     self.game_state = GameState.DARK_TURN
                 else:
                     self.game_state = GameState.LIGHT_TURN
+            promote = self.check_and_promote_piece(to_field)
             self.debug_print_board()
-            return MoveResult(GameError.NO_ERROR, end_turn=end_turn, captured_piece_field=through_field)
+            return MoveResult(GameError.NO_ERROR, end_turn=end_turn, promote=promote, captured_piece_field=through_field)
         if self.game_state == GameState.LIGHT_TURN:
             self.game_state = GameState.DARK_TURN
         else:
             self.game_state = GameState.LIGHT_TURN
+        promote = self.check_and_promote_piece(to_field)
         self.debug_print_board()
-        return MoveResult(GameError.NO_ERROR, end_turn=True)
+        return MoveResult(GameError.NO_ERROR, end_turn=True, promote=promote)
 
     def can_capture_any(self, from_field: int) -> bool:
         piece = self.fields[from_field]

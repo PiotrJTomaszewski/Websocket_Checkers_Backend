@@ -84,8 +84,8 @@ class GamesHandler(metaclass=Singleton):
                 player.send_msg('WrongMove', [str(from_field), str(result.move_error.value)])
             else:
                 room: GameRoom = player.room
-                room.players[0].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.captured_piece_field)])
-                room.players[1].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.captured_piece_field)])
+                room.players[0].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.promote), str(result.captured_piece_field)])
+                room.players[1].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.promote), str(result.captured_piece_field)])
         else:
             player.send_msg('WrongMove', [str(from_field), str(GameError.NOT_YOUR_PIECE.value)])
         # TODO: Check for victory
