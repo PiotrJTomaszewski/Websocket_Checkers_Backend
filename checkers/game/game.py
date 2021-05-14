@@ -129,7 +129,7 @@ class Game:
     def check_and_promote_piece(self, field_no) -> bool:
         piece = self.fields[field_no]
         if piece is not None:
-            row = field_no // self.board_width
+            row = (field_no-1) // self.board_width
             if piece.get_color() == GamePieceColor.LIGHT and row == 0:
                 piece.type = GamePieceType.KING
                 return True
@@ -308,3 +308,30 @@ class Game:
                     print("One down right")
                     return True
         return self.can_capture_any(from_field)
+
+    def check_victory(self) -> bool:
+        light_pieces_count = 0
+        dark_pieces_count = 0
+        light_pieces_that_can_move = 0
+        dark_pieces_that_can_move = 0
+        for piece in self.fields:
+            if piece is not None:
+                if piece.get_color() == GamePieceColor.LIGHT:
+                    light_pieces_count += 1
+                    if self.can_piece_make_any_move(piece.field_no):
+                        light_pieces_that_can_move += 1
+                else:
+                    dark_pieces_count += 1
+                    if self.can_piece_make_any_move(piece.field_no):
+                        dark_pieces_that_can_move += 1
+        if light_pieces_that_can_move == 0 and dark_pieces_that_can_move == 0:
+            self.game_state = GameState.TIE
+            return True
+        if light_pieces_count == 0 or light_pieces_that_can_move == 0:
+            self.game_state = GameState.DARK_WON
+            return True
+        if dark_pieces_count == 0 or dark_pieces_that_can_move == 0:
+            self.game_state = GameState.LIGHT_WON
+            return True
+        return False
+

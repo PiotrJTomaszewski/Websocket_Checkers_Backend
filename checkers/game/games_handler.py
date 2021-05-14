@@ -88,4 +88,11 @@ class GamesHandler(metaclass=Singleton):
                 room.players[1].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.promote), str(result.captured_piece_field)])
         else:
             player.send_msg('WrongMove', [str(from_field), str(GameError.NOT_YOUR_PIECE.value)])
-        # TODO: Check for victory
+        self.check_victory(player)
+
+    def check_victory(self, player: Player):
+        game: Game = player.room.game
+        if game.check_victory():
+            room: GameRoom = player.room
+            room.players[0].send_msg('GameEnd', [str(game.game_state.value)])
+            room.players[1].send_msg('GameEnd', [str(game.game_state.value)])
