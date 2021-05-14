@@ -4,7 +4,7 @@ from .game_piece import GamePieceColor
 from .game import Game, GameError, GameState, MoveResult
 
 from json import JSONEncoder
-
+import time
 
 class Singleton(type):
     _instances = {}
@@ -17,6 +17,7 @@ class Singleton(type):
 
 
 class GamesHandler(metaclass=Singleton):
+    INACTIVITY_TIMEOUT = 15 * 60
 
     def __init__(self) -> None:
         self.rooms: list[GameRoom] = []
@@ -30,11 +31,23 @@ class GamesHandler(metaclass=Singleton):
         self.rooms.append(room)
         return room
 
-    def remove_room(self, room: GameRoom) -> None:
-        del self.players[room.players[0].get_uuid_str()]
-        del self.players[room.players[1].get_uuid_str()]
-        self.rooms.remove(room)
-        print(f"Removing a room, {len(self.players.keys())} players and {len(self.rooms)} rooms left")
+    def check_and_remove_inactive(self) -> None:
+        for room in self.rooms:
+            is_any_player_active: bool = False
+            for player in room.players:
+                if player is not None:
+                    disc_time: float = player.get_last_disconnection_time()
+                    if disc_time is None or (time.time() - disc_time < self.INACTIVITY_TIMEOUT):
+                        is_any_player_active = True
+            if not is_any_player_active:
+                for player in room.players:
+                    if player is not None:
+                        try:
+                            del self.players[player.get_uuid_str()]
+                        except KeyError:
+                            print(f"Couldn't find player with uuid {room.players[0]} while removing")
+                self.rooms.remove(room)
+                print(f"Removing a room due to inactivity, {len(self.players.keys())} players and {len(self.rooms)} rooms left")
 
     def get_player(self, uuid_str: str) -> Player:
         return self.players.get(uuid_str)

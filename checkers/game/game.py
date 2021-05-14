@@ -1,5 +1,4 @@
 from checkers import game
-from checkers.game.game_room import GameRoom
 from checkers.game.game_piece import GamePiece, GamePieceColor, GamePieceType
 from enum import Enum
 

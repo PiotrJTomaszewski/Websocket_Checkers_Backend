@@ -2,6 +2,7 @@ from checkers.game.game_piece import GamePieceColor
 from checkers.game import game_room
 
 from uuid import UUID, uuid4
+import time
 
 class Player:
     def __init__(self, uuid_str: str = None) -> None:
@@ -10,7 +11,7 @@ class Player:
         self.uuid: UUID = None
         self.send_msg: function = None
         self.piece_color: GamePieceColor = None
-        self.is_connected = False
+        self.connection_lost_time = None
         if uuid_str is None:
             self.gen_uuid()
         else:
@@ -33,5 +34,11 @@ class Player:
     def set_send_msg_func(self, func) -> None:
         self.send_msg = func
 
-    def set_is_connected(self, is_connected: bool) -> None:
-        self.is_connected = is_connected
+    def mark_connected(self) -> None:
+        self.connection_lost_time = None
+
+    def mark_disconnected(self) -> None:
+        self.connection_lost_time = time.time()
+
+    def get_last_disconnection_time(self) -> float:
+        return self.connection_lost_time
