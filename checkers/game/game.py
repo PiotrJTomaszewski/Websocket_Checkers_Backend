@@ -22,6 +22,7 @@ class GameError(Enum):
     NOT_YOUR_TURN = 6
     NOT_YOUR_PIECE = 7
     MUST_CAPTURE = 8
+    MUST_USE_SAME_PIECE = 9
 
 
 class Direction(Enum):
@@ -48,6 +49,7 @@ class Game:
         self.game_error: GameError = GameError.NO_ERROR
         self.fields: list[GamePiece] = [None for _ in range(
             self.board_height*self.board_width+1)]  # Plus one because staring from 1
+        self.continue_capturing_field_no = None
 
     def start_game(self):
         self.init_pieces()
@@ -138,8 +140,9 @@ class Game:
                 return True
         return False
 
-    # TODO: If it's a second move in turn check if it's the same piece
     def move_piece(self, from_field, to_field) -> MoveResult:
+        if self.continue_capturing_field_no is not None and from_field != self.continue_capturing_field_no:
+            return MoveResult(GameError.MUST_USE_SAME_PIECE)
         if from_field < 1 or from_field > 32:
             return MoveResult(GameError.CANT_MOVE_PIECE)
         if to_field < 1 or to_field > 32:
@@ -202,6 +205,7 @@ class Game:
                 else:
                     self.game_state = GameState.LIGHT_TURN
             promote = self.check_and_promote_piece(to_field)
+            self.continue_capturing_field_no = to_field
             self.debug_print_board()
             return MoveResult(GameError.NO_ERROR, end_turn=end_turn, promote=promote, captured_piece_field=through_field)
         if self.game_state == GameState.LIGHT_TURN:
@@ -209,6 +213,7 @@ class Game:
         else:
             self.game_state = GameState.LIGHT_TURN
         promote = self.check_and_promote_piece(to_field)
+        self.continue_capturing_field_no = None
         self.debug_print_board()
         return MoveResult(GameError.NO_ERROR, end_turn=True, promote=promote)
 
