@@ -10,6 +10,7 @@ class Player:
         self.uuid: UUID = None
         self.send_msg: function = None
         self.piece_color: GamePieceColor = None
+        self.is_connected = False
         if uuid_str is None:
             self.gen_uuid()
         else:
@@ -31,3 +32,6 @@ class Player:
 
     def set_send_msg_func(self, func) -> None:
         self.send_msg = func
+
+    def set_is_connected(self, is_connected: bool) -> None:
+        self.is_connected = is_connected

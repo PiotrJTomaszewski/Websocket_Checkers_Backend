@@ -33,6 +33,7 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
     def msg_hand_join_new(self, data=None):
         self.player, _ = GamesHandler().add_player(None)
         self.player.set_send_msg_func(self.msg_send)
+        self.player.set_is_connected(True)
         self.msg_send('WelcomeNew', [self.player.get_uuid_str()])
         GamesHandler().check_and_start_game(self.player.room)
 
@@ -40,6 +41,7 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         uuid_str = data[0]
         self.player, is_new = GamesHandler().add_player(uuid_str)
         self.player.set_send_msg_func(self.msg_send)
+        self.player.set_is_connected(True)
         if is_new:
             self.msg_send('Welcome')
             GamesHandler().check_and_start_game(self.player.room)
@@ -64,8 +66,10 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         print("Connection closed")
-        # TODO: Cleanup if both players left the room
-
-    def on_connection_close(self) -> None:
-        print("On connection close")
+        if self.player is not None:
+            self.player.set_is_connected(False)
+            room = self.player.room
+            if (room.players[0].is_connected == False and room.players[0].is_connected == False):
+                print("Both players have left the game")
+                GamesHandler().remove_room(self.player.room)
 

@@ -30,6 +30,12 @@ class GamesHandler(metaclass=Singleton):
         self.rooms.append(room)
         return room
 
+    def remove_room(self, room: GameRoom) -> None:
+        del self.players[room.players[0].get_uuid_str()]
+        del self.players[room.players[1].get_uuid_str()]
+        self.rooms.remove(room)
+        print(f"Removing a room, {len(self.players.keys())} players and {len(self.rooms)} rooms left")
+
     def get_player(self, uuid_str: str) -> Player:
         return self.players.get(uuid_str)
 
@@ -63,9 +69,9 @@ class GamesHandler(metaclass=Singleton):
             room.start_game()
             pieces_enc = self.get_pieces_list(room.game)
             room.players[0].send_msg(
-                'StartGame', [str(GamePieceColor.LIGHT.value), pieces_enc])
+                'StartGame', [str(room.players[0].piece_color.value), pieces_enc])
             room.players[1].send_msg(
-                'StartGame', [str(GamePieceColor.DARK.value), pieces_enc])
+                'StartGame', [str(room.players[1].piece_color.value), pieces_enc])
             print("Game started")
 
     def send_state(self, player: Player):
