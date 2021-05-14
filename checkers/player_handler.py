@@ -1,3 +1,4 @@
+from typing import List, Optional
 from checkers.game.game import Game
 from checkers.game.games_handler import GamesHandler
 from checkers.game import player
@@ -16,6 +17,11 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
 
     def open(self) -> None:
         print("New Connection")
+
+    def select_subprotocol(self, subprotocols: List[str]) -> Optional[str]:
+        if "checkers_game" in subprotocols:
+            return "checkers_game"
+        return None
 
     def msg_send(self, msg_type, data=None):
         print('Message sent: ', msg_type, data)
