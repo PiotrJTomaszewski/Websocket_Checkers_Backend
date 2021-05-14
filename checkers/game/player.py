@@ -3,7 +3,6 @@ from checkers.game import game_room
 
 from uuid import UUID, uuid4
 
-
 class Player:
     def __init__(self, uuid_str: str = None) -> None:
         self.room: 'game_room.GameRoom' = None
@@ -28,8 +27,7 @@ class Player:
     def set_game_room(self, room: 'game_room.GameRoom', in_room_id: int) -> None:
         self.room = room
         self.in_room_id = in_room_id
-        # TODO: Maybe rand?
-        self.piece_color = GamePieceColor.LIGHT if self.in_room_id == 0 else GamePieceColor.DARK
+        self.piece_color = GamePieceColor.LIGHT if self.in_room_id == self.room.light_player_id else GamePieceColor.DARK
 
     def set_send_msg_func(self, func) -> None:
         self.send_msg = func
