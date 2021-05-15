@@ -91,8 +91,7 @@ class GamesHandler(metaclass=Singleton):
         # TODO: Finish
         if player.room.in_game:
             pieces = self.get_pieces_list(player.room.game)
-            color_val = player.in_room_id + 1
-            player.send_msg('CurrentState', [str(color_val), str(
+            player.send_msg('CurrentState', [str(player.piece_color.value), str(
                 player.room.game.game_state.value), pieces])
 
     def move_piece(self, player: Player, from_field: int, to_field: int) -> None:
