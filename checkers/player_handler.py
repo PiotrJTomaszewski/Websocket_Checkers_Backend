@@ -24,7 +24,7 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         return None
 
     def msg_send(self, msg_type, data=None):
-        print('Message sent: ', msg_type, data)
+        print('Message sent to ', self.player.get_uuid_str(), ': ', msg_type, data)
         if data is None:
             self.write_message(msg_type)
         else:
