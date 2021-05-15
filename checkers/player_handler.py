@@ -68,3 +68,6 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         print("Connection closed")
         if self.player is not None:
             self.player.mark_disconnected()
+            if not self.player.room.in_game:
+                GamesHandler().remove_room(self.player.room)
+                print("Player has left, he/she wasn't in a game so removing his/her room")

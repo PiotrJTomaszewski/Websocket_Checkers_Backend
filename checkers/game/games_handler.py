@@ -40,14 +40,17 @@ class GamesHandler(metaclass=Singleton):
                     if disc_time is None or (time.time() - disc_time < self.INACTIVITY_TIMEOUT):
                         is_any_player_active = True
             if not is_any_player_active:
-                for player in room.players:
-                    if player is not None:
-                        try:
-                            del self.players[player.get_uuid_str()]
-                        except KeyError:
-                            print(f"Couldn't find player with uuid {room.players[0]} while removing")
-                self.rooms.remove(room)
+                self.remove_room(room)
                 print(f"Removing a room due to inactivity, {len(self.players.keys())} players and {len(self.rooms)} rooms left")
+
+    def remove_room(self, room: GameRoom) -> None:
+        for player in room.players:
+            if player is not None:
+                try:
+                    del self.players[player.get_uuid_str()]
+                except KeyError:
+                    print(f"Couldn't find player with uuid {room.players[0]} while removing")
+        self.rooms.remove(room)
 
     def get_player(self, uuid_str: str) -> Player:
         return self.players.get(uuid_str)
@@ -114,3 +117,4 @@ class GamesHandler(metaclass=Singleton):
             room: GameRoom = player.room
             room.players[0].send_msg('GameEnd', [str(game.game_state.value)])
             room.players[1].send_msg('GameEnd', [str(game.game_state.value)])
+            room.end_game()
