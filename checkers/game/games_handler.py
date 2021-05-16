@@ -1,3 +1,4 @@
+from checkers.messages import MessageType
 from .game_room import GameRoom
 from .player import Player
 from .game_piece import GamePieceColor
@@ -74,47 +75,38 @@ class GamesHandler(metaclass=Singleton):
         else:
             return player, False
 
-    def get_pieces_list(self, game: Game):
-        pieces = game.filter_pieces()
-        pieces_dict_list = list(map(lambda piece: {'color': piece.get_color(
-        ).value, 'type': piece.get_type().value, 'field_no': piece.get_field_no()}, pieces))
-        return JSONEncoder().encode(pieces_dict_list)
-
     def check_and_start_game(self, room: GameRoom) -> None:
         if room.can_game_start():
             room.start_game()
-            pieces_enc = self.get_pieces_list(room.game)
             room.players[0].send_msg(
-                'StartGame', [str(room.players[0].piece_color.value), pieces_enc])
+                MessageType.START_GAME, (room.players[0].piece_color, ))
             room.players[1].send_msg(
-                'StartGame', [str(room.players[1].piece_color.value), pieces_enc])
+                MessageType.START_GAME, (room.players[1].piece_color, ))
             print("Game started")
 
     def send_state(self, player: Player):
-        # TODO: Finish
         if player.room.in_game:
-            pieces = self.get_pieces_list(player.room.game)
-            player.send_msg('CurrentState', [str(player.piece_color.value), str(
-                player.room.game.game_state.value), pieces])
+            pieces = player.room.game.filter_pieces()
+            player.send_msg(MessageType.CURRENT_STATE, (player.piece_color, player.room.game.game_state, pieces))
 
     def move_piece(self, player: Player, from_field: int, to_field: int) -> None:
         game: Game = player.room.game
         if game.get_piece_color(from_field) == player.piece_color:
             result: MoveResult = game.move_piece(from_field, to_field)
             if result.move_error != GameError.NO_ERROR:
-                player.send_msg('WrongMove', [str(from_field), str(result.move_error.value)])
+                player.send_msg(MessageType.WRONG_MOVE, (from_field, result.move_error))
             else:
                 room: GameRoom = player.room
-                room.players[0].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.promote), str(result.captured_piece_field)])
-                room.players[1].send_msg('Move', [str(from_field), str(to_field), str(result.end_turn), str(result.promote), str(result.captured_piece_field)])
+                room.players[0].send_msg(MessageType.MOVE_OK, (from_field, to_field, result.end_turn, result.promote, result.captured_piece_field))
+                room.players[1].send_msg(MessageType.MOVE_OK, (from_field, to_field, result.end_turn, result.promote, result.captured_piece_field))
         else:
-            player.send_msg('WrongMove', [str(from_field), str(GameError.NOT_YOUR_PIECE.value)])
+            player.send_msg(MessageType.WRONG_MOVE, (from_field, GameError.NOT_YOUR_PIECE))
         self.check_victory(player)
 
     def check_victory(self, player: Player):
         game: Game = player.room.game
         if game.check_victory():
             room: GameRoom = player.room
-            room.players[0].send_msg('GameEnd', [str(game.game_state.value)])
-            room.players[1].send_msg('GameEnd', [str(game.game_state.value)])
+            room.players[0].send_msg(MessageType.GAME_END, (game.game_state, ))
+            room.players[1].send_msg(MessageType.GAME_END, (game.game_state, ))
             room.end_game()
