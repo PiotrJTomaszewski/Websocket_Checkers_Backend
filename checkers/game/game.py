@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from checkers import game
 from checkers.game.game_piece import GamePiece, GamePieceColor, GamePieceType
 from enum import Enum
@@ -42,11 +43,10 @@ class MoveResult:
 class Game:
     board_width = 4
     board_height = 8
-    # TODO: What to do when the game ends?
     def __init__(self):
         self.game_state: GameState = GameState.NOT_STARTED
         self.game_error: GameError = GameError.NO_ERROR
-        self.fields: list[GamePiece] = [None for _ in range(
+        self.fields: List[GamePiece] = [None for _ in range(
             self.board_height*self.board_width+1)]  # Plus one because staring from 1
         self.continue_capturing_field_no = None
 
@@ -57,7 +57,7 @@ class Game:
     def row_col2field_no(self, row: int, col: int) -> int:
         return row * self.board_width + col + 1
 
-    def field_no2row_col(self, field_no: int) -> tuple[int]:
+    def field_no2row_col(self, field_no: int) -> Tuple[int]:
         # self.board_width, (field_no-1) % self.board_width
         return (field_no-1) // self.board_width, (field_no-1) % self.board_width
 
@@ -124,7 +124,7 @@ class Game:
         board_repr.append('\n')
         print(''.join(board_repr))
 
-    def filter_pieces(self) -> list[GamePiece]:
+    def filter_pieces(self) -> List[GamePiece]:
         return list(filter(lambda x: x is not None, self.fields))
 
     def check_and_promote_piece(self, field_no) -> bool:

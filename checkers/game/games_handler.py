@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from checkers.messages import MessageType
 from .game_room import GameRoom
 from .player import Player
@@ -21,8 +22,8 @@ class GamesHandler(metaclass=Singleton):
     INACTIVITY_TIMEOUT = 15 * 60
 
     def __init__(self) -> None:
-        self.rooms: list[GameRoom] = []
-        self.players: list[Player] = {}
+        self.rooms: List[GameRoom] = []
+        self.players: List[Player] = {}
 
     def find_empty_room(self) -> GameRoom:
         for room in self.rooms:
@@ -65,7 +66,7 @@ class GamesHandler(metaclass=Singleton):
         print(f'{len(self.players.keys())} players, {len(self.rooms)} rooms')
         return player
 
-    def add_player(self, uuid_str: str = None) -> tuple[Player, bool]:
+    def add_player(self, uuid_str: str = None) -> Tuple[Player, bool]:
         # Returns True if new Player object was created
         if uuid_str is None:
             return self.initialize_player(None), True

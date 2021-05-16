@@ -28,7 +28,6 @@ class GameRoom:
         self.game = game.Game()
         self.game.start_game()
         self.in_game = True
-        print(self.game.filter_pieces())
 
     def end_game(self) -> None:
         self.game = None

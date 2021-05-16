@@ -1,5 +1,6 @@
 from enum import Enum
 import struct
+from typing import List
 
 from .game.game import GamePiece
 
@@ -21,5 +22,5 @@ def encode_piece(piece: GamePiece) -> bytes:
     return struct.pack('!BBB', piece.color.value, piece.type.value, piece.field_no)
 
 
-def encode_piece_list(pieces: list[GamePiece]) -> bytes:
+def encode_piece_list(pieces: List[GamePiece]) -> bytes:
     return b''.join([encode_piece(piece) for piece in pieces])
