@@ -19,12 +19,12 @@ application = tornado.web.Application([
 
 if __name__ == '__main__':
     options.parse_command_line()
-    http_server = tornado.httpserver.HTTPServer(application)
+    http_server = tornado.httpserver.HTTPServer(application, xheaders=True)
     if options.unix_socket:
         socket = tornado.netutil.bind_unix_socket(options.unix_socket)
         http_server.add_socket(socket)
     else:
-        http_server.listen(options.listen_port)
+        http_server.listen(options.listen_port, address='127.0.0.1')
     print("Server ready")
     # Run every 30 minutes
     tornado.ioloop.PeriodicCallback(GamesHandler().check_and_remove_inactive, 30 * 60 * 1000).start()
