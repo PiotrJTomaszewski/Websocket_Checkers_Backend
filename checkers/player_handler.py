@@ -34,29 +34,29 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
             return "checkers_game"
         return None
 
-    def msg_encode_welcome(self, data: tuple=None) -> bytes:
+    def msg_encode_welcome(self, data: dict=None) -> bytes:
         return struct.pack('!B', MessageType.WELCOME.value)
 
-    def msg_encode_welcome_new(self, data: tuple=None) -> bytes:
-        uuid_str: str = data[0]
+    def msg_encode_welcome_new(self, data: dict=None) -> bytes:
+        uuid_str: str = data['uuid_str']
         return b''.join((struct.pack('!B', MessageType.WELCOME_NEW.value), uuid_str.encode('utf-8')))
 
-    def msg_encode_start_game(self, data: tuple=None) -> bytes:
-        return struct.pack('!BB', MessageType.START_GAME.value, data[0].value)
+    def msg_encode_start_game(self, data: dict=None) -> bytes:
+        return struct.pack('!BB', MessageType.START_GAME.value, data['piece_color'].value)
 
-    def msg_encode_current_state(self, data: tuple=None) -> bytes:
-        return b''.join((struct.pack('!BBB', MessageType.CURRENT_STATE.value, data[0].value, data[1].value), encode_piece_list(data[2])))
+    def msg_encode_current_state(self, data: dict=None) -> bytes:
+        return b''.join((struct.pack('!BBB', MessageType.CURRENT_STATE.value, data['piece_color'].value, data['game_state'].value), encode_piece_list(data['pieces'])))
 
-    def msg_encode_wrong_move(self, data: tuple=None) -> bytes:
-        return struct.pack('!BBB', MessageType.WRONG_MOVE.value, data[0], data[1].value)
+    def msg_encode_wrong_move(self, data: dict=None) -> bytes:
+        return struct.pack('!BBB', MessageType.WRONG_MOVE.value, data['from_field'], data['error'].value)
 
-    def msg_encode_move_ok(self, data: tuple=None) -> bytes:
-        return struct.pack('!BBB??B', MessageType.MOVE_OK.value, data[0], data[1], data[2], data[3], data[4] if data[4] is not None else 0)
+    def msg_encode_move_ok(self, data: dict=None) -> bytes:
+        return struct.pack('!BBB??B', MessageType.MOVE_OK.value, data['from_field'], data['to_field'], data['end_turn'], data['promote'], data.get('captured_field') or 0)
 
-    def msg_encode_game_end(self, data: tuple=None) -> bytes:
-        return struct.pack('!BB', MessageType.GAME_END.value, data[0].value)
+    def msg_encode_game_end(self, data: dict=None) -> bytes:
+        return struct.pack('!BB', MessageType.GAME_END.value, data['game_state'].value)
 
-    def msg_send(self, msg_type: MessageType, data: tuple=None) -> None:
+    def msg_send(self, msg_type: MessageType, data: dict=None) -> None:
         print(f'Message {msg_type.name} sent to {self.player.get_uuid_str()}')
         self.write_message(self.msg_send_lookup[msg_type](data), binary=True)
 
@@ -65,7 +65,7 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         self.player.set_send_msg_func(self.msg_send)
         self.player.mark_connected()
         print("Received JOIN_NEW")
-        self.msg_send(MessageType.WELCOME_NEW, (self.player.get_uuid_str(), ))
+        self.msg_send(MessageType.WELCOME_NEW, {'uuid_str': self.player.get_uuid_str()})
         GamesHandler().check_and_start_game(self.player.room)
 
     def msg_recv_join_existing(self, encoded_data: bytes) -> None:
