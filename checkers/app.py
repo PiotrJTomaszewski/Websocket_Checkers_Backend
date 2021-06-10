@@ -23,5 +23,6 @@ if __name__ == '__main__':
     else:
         http_server.listen(options.listen_port)
     print("Server ready")
+    # Run every 30 minutes
     tornado.ioloop.PeriodicCallback(GamesHandler().check_and_remove_inactive, 30 * 60 * 1000).start()
     tornado.ioloop.IOLoop.instance().start()
