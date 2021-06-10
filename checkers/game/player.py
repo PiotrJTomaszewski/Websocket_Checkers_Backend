@@ -4,6 +4,7 @@ from checkers.game import game_room
 from uuid import UUID, uuid4
 import time
 
+
 class Player:
     def __init__(self, uuid_str: str = None) -> None:
         self.room: 'game_room.GameRoom' = None

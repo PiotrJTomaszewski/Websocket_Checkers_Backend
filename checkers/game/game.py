@@ -42,6 +42,7 @@ class MoveResult:
 class Game:
     board_width = 4
     board_height = 8
+
     def __init__(self) -> None:
         self.game_state: GameState = GameState.NOT_STARTED
         self.game_error: GameError = GameError.NO_ERROR
@@ -219,7 +220,8 @@ class Game:
 
     def can_capture_any(self, from_field: int) -> bool:
         piece = self.fields[from_field]
-        opponent_color = GamePieceColor.LIGHT if piece.get_color() == GamePieceColor.DARK else GamePieceColor.DARK
+        opponent_color = \
+            GamePieceColor.LIGHT if piece.get_color() == GamePieceColor.DARK else GamePieceColor.DARK
         from_row, from_col = self.field_no2row_col(from_field)
         if piece.get_color() == GamePieceColor.DARK or piece.get_type() == GamePieceType.KING:
             if from_row % 2 == 0:
@@ -339,4 +341,3 @@ class Game:
             self.game_state = GameState.LIGHT_WON
             return True
         return False
-

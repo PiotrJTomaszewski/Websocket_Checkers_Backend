@@ -88,26 +88,33 @@ class GamesHandler(metaclass=Singleton):
     def send_state(self, player: Player) -> None:
         if player.room.in_game:
             pieces = player.room.game.filter_pieces()
-            player.send_msg(MessageType.CURRENT_STATE, {'piece_color': player.piece_color, 'game_state': player.room.game.game_state, 'pieces': pieces})
+            player.send_msg(MessageType.CURRENT_STATE, 
+                {'piece_color': player.piece_color, 'game_state': player.room.game.game_state, 'pieces': pieces})
 
     def move_piece(self, player: Player, from_field: int, to_field: int) -> None:
         game: Game = player.room.game
         if game.get_piece_color(from_field) == player.piece_color:
             result: MoveResult = game.move_piece(from_field, to_field)
             if result.move_error != GameError.NO_ERROR:
-                player.send_msg(MessageType.WRONG_MOVE, {'from_field': from_field, 'error': result.move_error})
+                player.send_msg(MessageType.WRONG_MOVE, 
+                    {'from_field': from_field, 'error': result.move_error})
             else:
                 room: GameRoom = player.room
-                room.players[0].send_msg(MessageType.MOVE_OK, {'from_field': from_field, 'to_field': to_field, 'end_turn': result.end_turn, 'promote': result.promote, 'captured_field': result.captured_piece_field})
-                room.players[1].send_msg(MessageType.MOVE_OK, {'from_field': from_field, 'to_field': to_field, 'end_turn': result.end_turn, 'promote': result.promote, 'captured_field': result.captured_piece_field})
+                room.players[0].send_msg(MessageType.MOVE_OK, {'from_field': from_field, 'to_field': to_field,
+                                         'end_turn': result.end_turn, 'promote': result.promote, 'captured_field': result.captured_piece_field})
+                room.players[1].send_msg(MessageType.MOVE_OK, {'from_field': from_field, 'to_field': to_field,
+                                         'end_turn': result.end_turn, 'promote': result.promote, 'captured_field': result.captured_piece_field})
         else:
-            player.send_msg(MessageType.WRONG_MOVE, {'from_field': from_field, 'error': GameError.NOT_YOUR_PIECE})
+            player.send_msg(MessageType.WRONG_MOVE, 
+                {'from_field': from_field, 'error': GameError.NOT_YOUR_PIECE})
         self.check_victory(player)
 
     def check_victory(self, player: Player) -> None:
         game: Game = player.room.game
         if game.check_victory():
             room: GameRoom = player.room
-            room.players[0].send_msg(MessageType.GAME_END, {'game_state': game.game_state})
-            room.players[1].send_msg(MessageType.GAME_END, {'game_state': game.game_state})
+            room.players[0].send_msg(MessageType.GAME_END, 
+                {'game_state': game.game_state})
+            room.players[1].send_msg(MessageType.GAME_END, 
+                {'game_state': game.game_state})
             room.end_game()
