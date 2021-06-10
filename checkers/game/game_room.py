@@ -10,7 +10,7 @@ class GameRoom:
         self.in_game = False
         self.light_player_id = random.randint(0, 1)
 
-    def is_full(self):
+    def is_full(self) -> bool:
         return self.players[0] is not None and self.players[1] is not None
 
     def add_player(self, player: 'player.Player') -> int:

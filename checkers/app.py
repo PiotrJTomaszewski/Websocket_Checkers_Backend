@@ -7,12 +7,15 @@ import tornado.httpserver
 import tornado.netutil
 from tornado.options import options, define
 
+
 define('listen_port', group='webserver', default=8888, help='Listen port')
 define('unix_socket', group='webserver', default=None, help='Path to unix socket to bind')
+
 
 application = tornado.web.Application([
     (r'/ws', PlayerHandler),
 ])
+
 
 if __name__ == '__main__':
     options.parse_command_line()

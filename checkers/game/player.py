@@ -31,7 +31,7 @@ class Player:
         self.in_room_id = in_room_id
         self.piece_color = GamePieceColor.LIGHT if self.in_room_id == self.room.light_player_id else GamePieceColor.DARK
 
-    def set_send_msg_func(self, func) -> None:
+    def set_send_msg_func(self, func: 'function') -> None:
         self.send_msg = func
 
     def mark_connected(self) -> None:

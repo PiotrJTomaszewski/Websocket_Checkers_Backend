@@ -1,5 +1,4 @@
 from typing import List, Tuple
-from checkers import game
 from checkers.game.game_piece import GamePiece, GamePieceColor, GamePieceType
 from enum import Enum
 
@@ -43,14 +42,14 @@ class MoveResult:
 class Game:
     board_width = 4
     board_height = 8
-    def __init__(self):
+    def __init__(self) -> None:
         self.game_state: GameState = GameState.NOT_STARTED
         self.game_error: GameError = GameError.NO_ERROR
         self.fields: List[GamePiece] = [None for _ in range(
             self.board_height*self.board_width+1)]  # Plus one because staring from 1
         self.continue_capturing_field_no = None
 
-    def start_game(self):
+    def start_game(self) -> None:
         self.init_pieces()
         self.game_state = GameState.LIGHT_TURN
 
@@ -127,7 +126,7 @@ class Game:
     def filter_pieces(self) -> List[GamePiece]:
         return list(filter(lambda x: x is not None, self.fields))
 
-    def check_and_promote_piece(self, field_no) -> bool:
+    def check_and_promote_piece(self, field_no: int) -> bool:
         piece = self.fields[field_no]
         if piece is not None:
             row = (field_no-1) // self.board_width
@@ -139,7 +138,7 @@ class Game:
                 return True
         return False
 
-    def move_piece(self, from_field, to_field) -> MoveResult:
+    def move_piece(self, from_field: int, to_field: int) -> MoveResult:
         if self.continue_capturing_field_no is not None and from_field != self.continue_capturing_field_no:
             return MoveResult(GameError.MUST_USE_SAME_PIECE)
         if from_field < 1 or from_field > 32:

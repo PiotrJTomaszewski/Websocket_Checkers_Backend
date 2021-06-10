@@ -2,11 +2,10 @@ from typing import List, Tuple
 from checkers.messages import MessageType
 from .game_room import GameRoom
 from .player import Player
-from .game_piece import GamePieceColor
-from .game import Game, GameError, GameState, MoveResult
+from .game import Game, GameError, MoveResult
 
-from json import JSONEncoder
 import time
+
 
 class Singleton(type):
     _instances = {}
@@ -41,6 +40,7 @@ class GamesHandler(metaclass=Singleton):
                     disc_time: float = player.get_last_disconnection_time()
                     if disc_time is None or (time.time() - disc_time < self.INACTIVITY_TIMEOUT):
                         is_any_player_active = True
+                        continue
             if not is_any_player_active:
                 self.remove_room(room)
                 print(f"Removing a room due to inactivity, {len(self.players.keys())} players and {len(self.rooms)} rooms left")
@@ -85,7 +85,7 @@ class GamesHandler(metaclass=Singleton):
                 MessageType.START_GAME, {'piece_color': room.players[1].piece_color})
             print("Game started")
 
-    def send_state(self, player: Player):
+    def send_state(self, player: Player) -> None:
         if player.room.in_game:
             pieces = player.room.game.filter_pieces()
             player.send_msg(MessageType.CURRENT_STATE, {'piece_color': player.piece_color, 'game_state': player.room.game.game_state, 'pieces': pieces})
@@ -104,7 +104,7 @@ class GamesHandler(metaclass=Singleton):
             player.send_msg(MessageType.WRONG_MOVE, {'from_field': from_field, 'error': GameError.NOT_YOUR_PIECE})
         self.check_victory(player)
 
-    def check_victory(self, player: Player):
+    def check_victory(self, player: Player) -> None:
         game: Game = player.room.game
         if game.check_victory():
             room: GameRoom = player.room

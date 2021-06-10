@@ -1,6 +1,5 @@
 from checkers.messages import MessageType, encode_piece_list
 from typing import List, Optional
-from checkers.game.game import Game
 from checkers.game.games_handler import GamesHandler
 from checkers.game import player
 
@@ -85,7 +84,7 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         print(f"Received MOVE from {self.player.get_uuid_str()} from {from_field} to {to_field}")
         GamesHandler().move_piece(self.player, from_field, to_field)
 
-    def on_message(self, message):
+    def on_message(self, message: bytes) -> None:
         msg_type = MessageType(struct.unpack('!B', bytes((message[0], )))[0])
         if msg_type == MessageType.JOIN_NEW:
             self.msg_recv_join_new()
@@ -96,7 +95,7 @@ class PlayerHandler(tornado.websocket.WebSocketHandler):
         else:
             print(f"Received incorrect message type {msg_type.name}")
 
-    def on_close(self):
+    def on_close(self) -> None:
         print("Connection closed")
         if self.player is not None:
             self.player.mark_disconnected()
