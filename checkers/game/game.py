@@ -12,7 +12,7 @@ class GameState(Enum):
     TIE = 6
 
 
-class GameError(Enum):
+class MoveError(Enum):
     NO_ERROR = 1
     CANT_MOVE_PIECE = 2
     ILLEGAL_MOVE = 3
@@ -32,7 +32,7 @@ class Direction(Enum):
 
 
 class MoveResult:
-    def __init__(self, move_error: GameError, end_turn: bool = None, promote: bool = None, captured_piece_field: int = None) -> None:
+    def __init__(self, move_error: MoveError, end_turn: bool = None, promote: bool = None, captured_piece_field: int = None) -> None:
         self.move_error = move_error
         self.end_turn = end_turn
         self.promote = promote
@@ -45,7 +45,7 @@ class Game:
 
     def __init__(self) -> None:
         self.game_state: GameState = GameState.NOT_STARTED
-        self.game_error: GameError = GameError.NO_ERROR
+        self.move_error: MoveError = MoveError.NO_ERROR
         self.fields: List[GamePiece] = [None for _ in range(
             self.board_height*self.board_width+1)]  # Plus one because staring from 1
         self.continue_capturing_field_no = None
@@ -129,7 +129,7 @@ class Game:
 
     def check_and_promote_piece(self, field_no: int) -> bool:
         piece = self.fields[field_no]
-        if piece is not None:
+        if piece is not None and piece.get_type() == GamePieceType.MAN:
             row = (field_no-1) // self.board_width
             if piece.get_color() == GamePieceColor.LIGHT and row == 0:
                 piece.type = GamePieceType.KING
@@ -141,36 +141,36 @@ class Game:
 
     def move_piece(self, from_field: int, to_field: int) -> MoveResult:
         if self.continue_capturing_field_no is not None and from_field != self.continue_capturing_field_no:
-            return MoveResult(GameError.MUST_USE_SAME_PIECE)
+            return MoveResult(MoveError.MUST_USE_SAME_PIECE)
         if from_field < 1 or from_field > 32:
-            return MoveResult(GameError.CANT_MOVE_PIECE)
+            return MoveResult(MoveError.CANT_MOVE_PIECE)
         if to_field < 1 or to_field > 32:
-            return MoveResult(GameError.ILLEGAL_MOVE)
+            return MoveResult(MoveError.ILLEGAL_MOVE)
         piece = self.fields[from_field]
         if piece is None:
-            return MoveResult(GameError.CANT_MOVE_PIECE)
+            return MoveResult(MoveError.CANT_MOVE_PIECE)
         if self.fields[to_field] is not None:
-            return MoveResult(GameError.FIELD_TAKEN)
+            return MoveResult(MoveError.FIELD_TAKEN)
         # Check if it's this player's turn
         if piece.get_color() == GamePieceColor.LIGHT and self.game_state != GameState.LIGHT_TURN:
-            return MoveResult(GameError.NOT_YOUR_TURN)
+            return MoveResult(MoveError.NOT_YOUR_TURN)
         if piece.get_color() == GamePieceColor.DARK and self.game_state != GameState.DARK_TURN:
-            return MoveResult(GameError.NOT_YOUR_TURN)
+            return MoveResult(MoveError.NOT_YOUR_TURN)
         from_row, from_col = self.field_no2row_col(from_field)
         to_row, to_col = self.field_no2row_col(to_field)
         up_down = Direction.UP if to_row > from_row else Direction.DOWN
         field_count = abs(to_row - from_row)
         if field_count > 2:
-            return MoveResult(GameError.ILLEGAL_MOVE)
+            return MoveResult(MoveError.ILLEGAL_MOVE)
         if from_row % 2 == 0:
             left_right = Direction.LEFT if to_col > from_col else Direction.RIGHT
         else:
             left_right = Direction.LEFT if to_col >= from_col else Direction.RIGHT
         # Check if the piece is moving backwards and if it is check if it's a king
         if up_down == Direction.UP and piece.get_color() == GamePieceColor.LIGHT and piece.get_type() == GamePieceType.MAN:
-            return MoveResult(GameError.NOT_KING)
+            return MoveResult(MoveError.NOT_KING)
         if up_down == Direction.DOWN and piece.get_color() == GamePieceColor.DARK and piece.get_type() == GamePieceType.MAN:
-            return MoveResult(GameError.NOT_KING)
+            return MoveResult(MoveError.NOT_KING)
         # Calculate the position of the piece that will be captured
         through_row = from_row
         through_col = from_col
@@ -184,13 +184,13 @@ class Game:
                 through_col += (0 if left_right == Direction.LEFT else -1)
             through_field = self.row_col2field_no(through_row, through_col)
             if through_field is None or self.fields[through_field] is None:
-                return MoveResult(GameError.ILLEGAL_MOVE)
+                return MoveResult(MoveError.ILLEGAL_MOVE)
             # Check if player tried to capture his own piece
             if piece.get_color() == self.fields[through_field].get_color():
-                return MoveResult(GameError.ILLEGAL_MOVE)
+                return MoveResult(MoveError.ILLEGAL_MOVE)
         else:
             if self.can_capture_any(from_field):
-                return MoveResult(GameError.MUST_CAPTURE)
+                return MoveResult(MoveError.MUST_CAPTURE)
         # Move the piece
         self.fields[to_field] = piece
         piece.field_no = to_field
@@ -208,7 +208,7 @@ class Game:
                 self.continue_capturing_field_no = to_field
             promote = self.check_and_promote_piece(to_field)
             self.debug_print_board()
-            return MoveResult(GameError.NO_ERROR, end_turn=end_turn, promote=promote, captured_piece_field=through_field)
+            return MoveResult(MoveError.NO_ERROR, end_turn=end_turn, promote=promote, captured_piece_field=through_field)
         if self.game_state == GameState.LIGHT_TURN:
             self.game_state = GameState.DARK_TURN
         else:
@@ -216,7 +216,7 @@ class Game:
         promote = self.check_and_promote_piece(to_field)
         self.continue_capturing_field_no = None
         self.debug_print_board()
-        return MoveResult(GameError.NO_ERROR, end_turn=True, promote=promote)
+        return MoveResult(MoveError.NO_ERROR, end_turn=True, promote=promote)
 
     def can_capture_any(self, from_field: int) -> bool:
         piece = self.fields[from_field]
